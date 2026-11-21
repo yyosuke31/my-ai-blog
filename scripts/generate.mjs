@@ -7,10 +7,15 @@ const title = process.env.ISSUE_TITLE || 'テスト記事';
 const promptText = process.env.ISSUE_BODY || 'このテーマについて簡潔に解説してください。';
 
 async function generateWithRetry(prompt) {
-  const models = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'];
+  // 現在稼働中の現役モデルリスト（上から順に試行）
+  const models = [
+    'gemini-3.8-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite'
+  ];
 
   for (const modelName of models) {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         console.log(`${modelName} で生成を試行中 (${attempt}回目)...`);
         const response = await ai.models.generateContent({
@@ -19,9 +24,17 @@ async function generateWithRetry(prompt) {
         });
         return response.text;
       } catch (error) {
-        console.warn(`エラー発生 (${modelName} - ${attempt}回目):`, error.status || error.message);
-        if (attempt < 3) {
-          await new Promise((res) => setTimeout(res, 10000 * attempt));
+        const status = error.status || '';
+        console.warn(`エラー発生 (${modelName} - ${attempt}回目):`, status, error.message);
+
+        // 404（モデル廃止・未対応）の場合は待たずに即座に次のモデルへ
+        if (status === 404 || String(error.message).includes('404')) {
+          break;
+        }
+
+        // 503（混雑）などの場合は5秒だけ待って再試行
+        if (attempt < 2) {
+          await new Promise((res) => setTimeout(res, 5000));
         }
       }
     }
