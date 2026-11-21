@@ -7,7 +7,7 @@ const title = process.env.ISSUE_TITLE || 'テスト記事';
 const promptText = process.env.ISSUE_BODY || 'このテーマについて簡潔に解説してください。';
 
 async function generateWithRetry(prompt) {
-  const models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+  const models = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'];
 
   for (const modelName of models) {
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -39,7 +39,7 @@ async function run() {
 ---
 title: "${title}"
 description: "${title}についての解説記事です。"
-pubDate: "${new Date().toISOString().split('T')[0]}"
+pubDate: "${new Date().toISOString().split('T')}"
 ---
 `;
 
